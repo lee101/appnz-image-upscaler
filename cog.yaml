@@ -8,7 +8,7 @@ build:
     - libgl1
     - libglib2.0-0
   run:
-    - python -c "from pathlib import Path; p=Path('/usr/local/lib/python3.11/site-packages/basicsr/data/degradations.py'); s=p.read_text(); p.write_text(s.replace('torchvision.transforms.functional_tensor import rgb_to_grayscale', 'torchvision.transforms.functional import rgb_to_grayscale'))"
+    - python -c "import sysconfig; from pathlib import Path; p=Path(sysconfig.get_paths()['purelib'])/'basicsr/data/degradations.py'; s=p.read_text(); p.write_text(s.replace('torchvision.transforms.functional_tensor import rgb_to_grayscale', 'torchvision.transforms.functional import rgb_to_grayscale'))"
     - mkdir -p /weights && python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth','/weights/RealESRGAN_x4plus.pth'); urllib.request.urlretrieve('https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/RealESRGAN_x4plus_anime_6B.pth','/weights/RealESRGAN_x4plus_anime_6B.pth'); urllib.request.urlretrieve('https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.3.pth','/weights/GFPGANv1.3.pth')"
 image: ghcr.io/lee101/appnz-image-upscaler:latest
 run: "predict.py:Runner"
