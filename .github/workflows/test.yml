@@ -31,8 +31,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          curl -fsSL https://cog.run/install.sh | sh
+      - name: Set up Cog
+        uses: replicate/setup-cog@v2
+        with:
+          cog-version: "v0.21.0"
+      - name: Build and publish image
+        run: |
           image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/appnz-image-upscaler
           tag="$image:${GITHUB_REF_NAME//\//-}"
           cog build -t "$tag"
