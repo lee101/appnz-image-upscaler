@@ -1,6 +1,6 @@
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
-models/
-*.png
-*.jpg
+.cog/
+weights/
+output.*
