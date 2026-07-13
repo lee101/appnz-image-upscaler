@@ -1,0 +1,9 @@
+{
+  "outputKind": "image",
+  "inputs": [
+    {"name": "image", "type": "image", "description": "Input image", "required": true, "order": 0},
+    {"name": "scale", "type": "integer", "description": "Output scale", "default": 4, "choices": ["2", "4"], "order": 1},
+    {"name": "model", "type": "string", "description": "Photo/general or anime model", "default": "general", "choices": ["general", "anime"], "order": 2},
+    {"name": "face_enhance", "type": "boolean", "description": "Restore faces with GFPGAN", "default": false, "order": 3}
+  ]
+}

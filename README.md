@@ -1,58 +1,47 @@
 # appnz-image-upscaler
 
-[![Deploy to app.nz](https://app.nz/deploy-button.svg)](https://app.nz/deploy?image=ghcr.io/lee101/appnz-image-upscaler:latest&name=image-upscaler&vram=8)
+[![Deploy to app.nz](https://app.nz/deploy-button.svg)](https://app.nz/deploy?image=ghcr.io/lee101/appnz-image-upscaler:latest&name=image-upscaler&hardware=gpu-rtx3090)
 
-[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) 4x image upscaling with
-optional [GFPGAN](https://github.com/TencentARC/GFPGAN) face restoration,
-packaged as an [app.nz cog](https://app.nz): a tiny HTTP contract on port 5000
-with `POST /predictions` in and a PNG data URI out. Runs on CPU; uses CUDA
-(fp16 + tiling) when a GPU is present. RealESRGAN_x4plus, GFPGANv1.4 and
-facexlib weights are baked into the image for fast cold starts.
+A focused [Cog](https://github.com/replicate/cog) image for 2×/4× image
+restoration with [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) and
+optional [GFPGAN](https://github.com/TencentARC/GFPGAN) face enhancement.
+Official weights are baked during the build, outputs with alpha stay PNG, and
+inference is tiled to bound VRAM.
 
-## Inputs
+The pinned PyTorch/CUDA pair supports Ada and Blackwell GPUs, including RTX
+5090. RTX 3090 remains the cost-effective default deployment target.
 
-| name | type | notes |
-|---|---|---|
-| `image` | image | https URL or `data:` URI |
-| `scale` | enum | `2` or `4` (default `4`) |
-| `face_enhance` | boolean | restore faces with GFPGAN (default `false`) |
-
-Output: `data:image/png;base64,...`.
-
-## Run locally
+## Local hardware
 
 ```bash
-docker run -p 5000:5000 ghcr.io/lee101/appnz-image-upscaler:latest
-
-curl -s http://localhost:5000/health-check
-
-curl -s http://localhost:5000/predictions -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"input": {"image": "https://example.com/photo.jpg", "scale": 4, "face_enhance": true}}' \
-  | python3 -c 'import sys,json,base64; open("out.png","wb").write(base64.b64decode(json.load(sys.stdin)["output"].split(",",1)[1]))'
+cog run -i image=@photo.jpg -i scale=4 -i model=general -o upscaled.png
+cog run -i image=@portrait.png -i scale=2 -i face_enhance=true -o restored.png
 ```
 
-## One-click deploy on app.nz
-
-Click the badge above, or open
-`https://app.nz/deploy?image=ghcr.io/lee101/appnz-image-upscaler:latest&name=image-upscaler&vram=8`.
-
-## Version pins
-
-basicsr 1.4.2 + realesrgan 0.3.0 break on newer torchvision (the removed
-`torchvision.transforms.functional_tensor` module) and numpy 2, so the image
-pins torch 2.1.2 / torchvision 0.16.2 (CPU wheels), numpy<2, and patches the
-import in the Dockerfile.
-
-## Build
+Or build and serve the HTTP endpoint directly:
 
 ```bash
-docker build -t ghcr.io/lee101/appnz-image-upscaler:latest .
+cog build -t appnz-image-upscaler
+docker run --rm --gpus all -p 5000:5000 appnz-image-upscaler
 ```
 
-GitHub Actions builds and pushes `ghcr.io/lee101/appnz-image-upscaler:latest`
-on every push to `main`.
+## app.nz deployment and subdomain demo
 
-## License
+```bash
+app cogs deploy image-upscaler
+app apps deploy demo --app upscale-demo
+app apps open upscale-demo
+```
 
-MIT
+The Cog scales to zero independently of the static demo at
+`https://upscale-demo.app.nz`. Change `demo/appnz.yaml` to use your own slug.
+
+## Verification
+
+```bash
+python -m unittest discover -s tests -v
+python -m json.tool appnz.schema.json >/dev/null
+```
+
+This adapter is MIT. Real-ESRGAN is BSD-3-Clause and GFPGAN is Apache-2.0; see
+[THIRD_PARTY.md](THIRD_PARTY.md) before redistributing an image with weights.
